@@ -14,8 +14,6 @@
 #define CUDA_KERNEL(...) <<< __VA_ARGS__ >>>
 #endif
 
-#define MaxMedianWindowSize (300)
-
 /// function to sort the array in ascending order
 template <typename T>
 __device__ __forceinline__ void arraySort(T* array, const uint32_t n) {
@@ -133,3 +131,24 @@ __global__ void sumSerialkernel(float* out, const float input[],
     *out = sumVal / scale;
   }
 }
+
+// Tools: printDev
+#define showDev(arr, len) \
+  printf("%s: ", #arr);   \
+  printDev(arr, len);
+__global__ void printKernel(const float* dev_arr, const uint32_t len = 1) {
+  if (threadIdx.x + blockDim.x * blockIdx.x == 0) {
+    for (uint32_t i = 0; i < (uint32_t)min(10, len); ++i)
+      printf("%f, ", dev_arr[i]);
+    printf("\n");
+  }
+}
+void printDev(const float* dev_arr, const uint32_t len) {
+  printKernel CUDA_KERNEL(1, 1)(dev_arr, len);
+}
+
+#define __cat(x, y) x##y
+#define seeType(TYPE, arr, len) \
+  std::vector<TYPE> __cat(seeVec_, arr)(arr, arr + len)
+#define seeComplex16(arr, len) seeType(complex16, arr, len)
+#define seeFloat(arr, len) seeType(float, arr, len)
